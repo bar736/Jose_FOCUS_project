@@ -95,7 +95,10 @@ standard_expression <- scale(embryo_expression_matrix)
 
 ##more tets
 
-data <- as.matrix(embryo_expression)
 
-heatmap(data)
+row.names(embryo_expression) <- embryo_expression$Id
+embryo_expression <- embryo_expression[1:41922, -1]
+embryo_expression <- data.matrix(embryo_expression)
+
+heatmap(embryo_expression)
 
