@@ -1,5 +1,10 @@
 library(tidyverse)
 library(cowplot)
+install.packages("png")
+library(ggplot2)
+library(png)
+library(grid)
+
 
 #reading files
 
@@ -8,11 +13,17 @@ read_csv('data/sample_oilcontent.csv')
 oilcontent <- read_csv('data/sample_oilcontent.csv')
 
 
+img <- readPNG("data/oildrop.png")
+
+
 #some plots
 
 Oilcontent_plot <- ggplot(data = oilcontent,
   mapping = aes(x = stage, y = oil_contentDW, colour = genotype, size = weight_mg)
-) + geom_point() 
+) + annotation_custom(rasterGrob(img, 
+                               width = unit(1,"npc"),
+                               height = unit(1,"npc")), 
+                    -Inf, Inf, -Inf, Inf) + geom_point() 
 
 Oilcontent_plot <- Oilcontent_plot +  
   labs(title = "Oil content in transgenic and wildtype cowpeas",

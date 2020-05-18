@@ -1,6 +1,7 @@
 library(tidyverse)
 library(cowplot)
 
+
 #reading files
 
 read_csv('data/embryo_all_normalised.csv')
@@ -18,17 +19,17 @@ gene_atlas <- gene_atlas <- rename(gene_atlas, Id=1)
 
 colnames(gene_atlas)
   
-gene_annotation <- select(gene_atlas, 1, 25)
+gene_annotation <- select(gene_atlas, 1,2, 25)
 
 view(full_join(embryo_expression, gene_annotation, by = c('Id')))
 
 embryo_expression_annotation <- full_join(embryo_expression, gene_annotation, by = c('Id'))
-embryo_expression_annotation <- rename(embryo_expression_annotation, annotation=10)
+embryo_expression_annotation <- rename(embryo_expression_annotation, annotation=11, gene_name=10)
 
 #tidying expression table
 
 tidy_embryo_expression <- embryo_expression_annotation %>% 
-  gather(key = Sample_name, value = ammount, -Id, -annotation)
+  gather(key = Sample_name, value = ammount, -Id, -annotation, -gene_name)
 
 tidy_embryo_expression <- tidy_embryo_expression %>% 
   mutate(sample = Sample_name)
@@ -37,10 +38,20 @@ tidy_embryo_expression <- separate(tidy_embryo_expression, Sample_name, into = c
 
 tidy_embryo_expression <- separate(tidy_embryo_expression, sample_name, into = c('todelete', 'genotype'), sep = "m.")
 
-tidy_embryo_expression <- rename(tidy_embryo_expression, gene=1, expression=7)
+tidy_embryo_expression <- rename(tidy_embryo_expression, gene_id=1, expression=8)
 
 
 tidy_embryo_expression <- tidy_embryo_expression %>% select(-todelete)
+
+
+#getting expression in log values
+log10tidy_embryo_expression <- tidy_embryo_expression %>%
+  filter(expression > 1)
+
+log10tidy_embryo_expression <- log10tidy_embryo_expression %>% 
+  mutate(expression = log10(expression))
+
+
 
 
 #writing tidy combined data out
@@ -51,19 +62,49 @@ write_csv(tidy_embryo_expression, 'results/tidy_embryo_expression.csv')
 
 ggplot(
   data = tidy_embryo_expression,
-  mapping = aes(x = gene, y = expression, colour = sample)
+  mapping = aes(x = gene_name, y = expression, colour = sample)
 ) + geom_point() 
+
+
+
 
 
 
 #heat map
 
-heatmap  <-  ggplot(data = tidy_embryo_expression, mapping = aes(x = sample,
-                                                     y = gene,
+heatmap  <-  ggplot(data = log10tidy_embryo_expression, mapping = aes(x = sample,
+                                                     y = gene_name,
                                                      fill = expression))+
   geom_tile()
 
   
+#Heatmap with matrix
+
+
+# Remove first column from seqdata and reduce gene numbers
+
+
+#embryo_expression200 <- embryo_expression %>%
+  #filter_all(all_vars(. > 200))
+
+countmatrix <- embryo_expression[,-(1)]
+countmatrix <- as.matrix(countmatrix)
+
+#heatmap(countmatrix200)  #Error: cannot allocate vector of size 6.5 Gb
+
+
+# Obtain CPMs
+expressionCPM <- cpm(countmatrix)
+
+
+
+
+
+# Store GeneID as rownames
+#rownames(countmatrix) <- embryo_expression[,1]
+
+
+
 
 
 #another way
