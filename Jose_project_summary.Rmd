@@ -59,7 +59,31 @@ tidy_embryo_expression <- tidy_embryo_expression %>% select(-todelete)
 
 write_csv(tidy_embryo_expression, 'results/tidy_embryo_expression.csv')
 
-####making sample description plot
+```
+
+
+# Introduction
+My name is **Jose Barrero** and I am a Research Scientist in Agriculture and Food. I worked mainly with cereal crops but I recently started leading the Cowpea Team in Black Mountain. I have not done any coding before but I generate large datasets that need complex analysis, so that is why I decided to learn a bit of R.
+
+# My Project
+My project is about exploring gene changes in a **transgenic high-oil cowpea** line we have made. Cowpea is key a staple crop in in West Africa and provides a protein source for over 200 million people. By introducing a gene cassette with three oil-related genes we tried to increased the oil-content in the seeds making them more nutricious.
+
+Our transgenic line (**named 15B**) has more oil in the seeds that the wildtype line (**named IT86**). We collected RNA samples from developing seeds from 15B and IT86 at **4 different stages** and performed a trancriptomic RNAseq analysis. 
+
+The goal of this project is to evaluate the gene expression changes bewteen the two genotypes and to identify genes related with the production of oil. The plan making was making a heatmap illustrating the gene changes across the samples and to group the genes into clusters with similar expression patterns.
+
+
+![](resources/img/cowpea.jpg){width=200px} ![](resources/img/oilconstruct.jpg){width=700px}
+
+
+
+## Description of the samples
+We first analysed the oil content in seeds from wildtype and transgenic seeds at develomental stages (Figure 1). The transgenic line showed a significant increased in oil content from stage 3, and remains high until stage 5 (matured dry seed). 
+We performed RNAseq in stages 1 to 4 in both gentypes. 
+
+```{r standard-plot1, out.width='60%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Oil content analysis in our cowpea samples. Seeds from five developmental stages were analysed, being the stage 5 the dry mature seed. For gene expression analysis RNA samples were collected from stages 1 to 4"}
+
+img <- readPNG("data/oildrop.png")
 
 Oilcontent_plot <- ggplot(data = oilcontent,
   mapping = aes(x = stage, y = oil_contentDW, colour = genotype, size = weight_mg)
@@ -69,7 +93,7 @@ Oilcontent_plot <- ggplot(data = oilcontent,
                     -Inf, Inf, -Inf, Inf) + geom_point() 
 
 Oilcontent_plot <- Oilcontent_plot +  
-  labs(title = "Oil content in transgenic and wildtype cowpeas",
+  labs(#title = "Oil content in transgenic and wildtype cowpeas",
        #caption = 'ADD CAPTION',
        x = "Seed developmental stage",
        y = "Oil content (% DW)",
@@ -86,10 +110,17 @@ Oilcontent_plot <- Oilcontent_plot +
     axis.title = element_text(size = 10, face = "bold"),
     )
 
-ggsave(filename = "results/oilcontent_plot.png", plot = Oilcontent_plot,
-       width = 15, height = 12, dpi = 300, units = "cm")
+Oilcontent_plot
+```
 
-### #Making heatmap
+
+
+To get tables formatting correctly, use `knitr::kable` to convert the table to html format. If
+you also want to have alternate row highlighting, pass the result to `kable_styling('striped')` 
+from the `kableExtra` package.
+
+**Tables**
+```{r mytable, out.width='80%', echo = T}
 
 expn_data <- read_csv("results/tidy_embryo_expression.csv")
 
@@ -108,17 +139,6 @@ expn_scaled <- expn_data %>%
 		norm_expn = (log_expn - mean(log_expn))/sd(log_expn)
 	) %>% 
 	ungroup()
-
-# Check a plot
-# Looks pretty good, but alphabetical order for genes not helpful
-
-expn_scaled %>% 
-	ggplot(aes(y = gene_name, x = sample, fill = norm_expn)) +
-	geom_tile() +
-	# Too many genes to show the names or the axis ticks so remove them
-	scale_y_discrete(labels = NULL, breaks = NULL) +
-	# Convert the Brewer RdBu palette into a continuous colour scale
-	scale_fill_distiller(palette = "RdBu")
 
 # Need expression in wide format for clustering
 # The final step converts it from a tibble into a data.frame with
@@ -149,6 +169,16 @@ expn_clustered <- cluster::clara(expn_table, k = 10)
 
 gene_order <- names(sort(expn_clustered$clustering))
 
+
+knitr::kable(head(expn_scaled, n = 5), format = "html", caption = "A table of data") %>% 
+  kable_styling("striped")
+```
+
+
+
+```{r standard-plot2, out.width='60%', fig.align='center', fig.height= 8, fig.width=6, fig.cap="Gene expression heatmap during seed developmet"}
+
+
 # Now redo the plot with one change, the gene names are first converted to a
 # factor, with the levels of the factor being our gene order.
 # This makes the genes be plotted in the correct order by ggplot.
@@ -171,7 +201,7 @@ heatmap_plot <- expn_scaled %>%
 
 
 heatmap_plot <- heatmap_plot +  
-  labs(title = "Gene expression heatmap during seed developmet",
+  labs(#title = "Gene expression heatmap during seed developmet",
        subtitle = "Comparison between the wildtype and the high-oil transgenic",
        caption = '(Raw RNAseq data analysed by J. Verdier)',
        x = "Sample developmental stage",
@@ -184,93 +214,11 @@ heatmap_plot <- heatmap_plot +
     axis.title = element_text(size = 10, face = "bold"),
     #axis.text.x = element_text(angle=45),
     legend.position="bottom")
-  
 
-ggsave(filename = "results/heatmap_plot.png", plot = heatmap_plot,
-       width = 15, height = 20, dpi = 300, units = "cm")
-
-
-
-
+heatmap_plot
 ```
 
 
-# Introduction
-My name is *Jose Barrero* and I am a Research Scientist in Agriculture and Food. I worked mainly with cereal crops but I recently started leading the Cowpea Team in Black Mountain. I have not done any coding before but I generate large datasets that need complex analysis, so that is why I decided to learn a bit of R.
-
-# My Project
-My project is about exploring gene changes in a **transgenic high-oil cowpea** line we have made. Our transgenic line (named 15B) has more oil in the seeds that the wildtype line (named IT86). We collected RNA samples from developing seeds from 15B and IT86 at 4 different stages and performed a trancriptomic RNAseq analysis. The goal of this project is to evaluate the gene expression changes bewteen the two geneotypes and identify genes related with the production of high oil. The plan making was making a heatmap illustrating the genes changes across the samples and identify clusters of genes with similar expression patterns.
-
-
-## Description of the samples
-
-
-We first analysed the oil content in seeds from wildtype and transgenic seeds at develomental stages (Figure 1). The transgenic line showed a significant increased in oil content from stage 3, and remains high until stage 5 (matured dry seed). 
-We performed RNAseq in stages 1 to 4 in both gentypes. 
-
-**Oil content analysis in our cowpea samples**
-```{r standard-plot, out.width='60%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Yet another gapminder plot"}
-Oilcontent_plot <- ggplot(data = oilcontent,
-  mapping = aes(x = stage, y = oil_contentDW, colour = genotype, size = weight_mg)
-) + annotation_custom(rasterGrob(img, 
-                               width = unit(1,"npc"),
-                               height = unit(1,"npc")), 
-                    -Inf, Inf, -Inf, Inf) + geom_point() 
-
-Oilcontent_plot <- Oilcontent_plot +  
-  labs(title = "Oil content in transgenic and wildtype cowpeas",
-       #caption = 'ADD CAPTION',
-       x = "Seed developmental stage",
-       y = "Oil content (% DW)",
-       size = "Seed weight (mg)",
-       colour = "Genotype") + 
-  #scale_x_continuous())+
-  scale_y_continuous(limits=c(0, 10))+
-  
-  theme(
-    panel.grid.minor = element_blank(),
-    plot.title = element_text(face = "bold"),
-    strip.background = element_blank(),
-    panel.grid.major = element_line(size = 1),
-    axis.title = element_text(size = 10, face = "bold"),
-    )
-```
-
-Your figure and table captions are automatically numbered and can be referenced in the text
-if needed: see eg. Table \@ref(tab:mytable) and Figure \@ref(fig:standard-plot)
-
-
-
-
-To get tables formatting correctly, use `knitr::kable` to convert the table to html format. If
-you also want to have alternate row highlighting, pass the result to `kable_styling('striped')` 
-from the `kableExtra` package.
-
-**Tables**
-```{r mytable, out.width='100%', echo = T}
-knitr::kable(head(gapminder, n = 5), format = "html", caption = "A table of data") %>% 
-  kable_styling("striped")
-```
-
-**Images from a file**
-
-![](resources/img/tidyverse.png){width=100px}
-
-**Plots from R**
-```{r standard-plot, out.width='60%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Yet another gapminder plot"}
-gapminder %>% 
-  filter(year == 1987) %>% 
-  ggplot(aes(x = gdpPercap, y = lifeExp, colour = continent, size = pop)) +
-  geom_point() +
-  scale_x_log10(labels = function(b) format(b, scientific = F)) +
-  scale_size(trans = "sqrt", guide = "none") +
-  scale_color_brewer(palette = "Set1") +
-  theme_linedraw() +
-  theme(legend.position = "bottom")
-```
-
-Your figure and table captions are automatically numbered and can be referenced in the text
-if needed: see eg. Table \@ref(tab:mytable) and Figure \@ref(fig:standard-plot)
 
 # My Digital Toolbox
 
@@ -288,9 +236,12 @@ You can use all the usual R markdown features in writing a project summary, incl
 
 Is there a tool/package/function in particular that you've enjoyed using? Give it a special shout out here. What about this tool makes it your favourite?
 
-![](https://raw.githubusercontent.com/tidyverse/ggplot2/master/man/figures/logo.png){.pull-right width=100px}
+![](resources/img/tidyverse.png){width=100px}![](resources/img/ggplot.png){width=90px}
 
-No prizes for guessing mine:
+
+
+
+
 
 # My time went ...
 
