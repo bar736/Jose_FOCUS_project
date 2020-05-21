@@ -75,7 +75,7 @@ The goal of this project is to evaluate the gene expression changes bewteen the 
 
 
 ## Description of the samples
-After generating the transgenic line, we first analysed the oil content in seeds from wildtype (**IT86**) and transgenic (**15B**) seeds during seed developmet (Figure 1). The transgenic line showed a significant increased in oil content from stage 3, remaining high until stage 5 (matured dry seed). 
+After generating the transgenic line, we first analysed the oil content in wildtype (**IT86**) and transgenic (**15B**) seeds during seed developmet (Figure 1). The transgenic line showed a significant increased in oil content from stage 3, remaining high until stage 5 (matured dry seed). 
 So we decided to collect RNA samples from stages 1 to 4 to performed RNAseq. 
 
 ```{r standard-plot1, echo=FALSE, out.width='60%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Oil content analysis in our cowpea samples. Seeds from five developmental stages were analysed, being the stage 5 the dry mature seed. For gene expression analysis RNA samples were collected from stages 1 to 4."}
@@ -110,7 +110,7 @@ Oilcontent_plot
 ## Workflow
 I started with a matrix of expression values and first I have to transform the data into a tidy dataframe and merge different files to add the gene descriptions into it. After that I did some basic data processing to remove genes with low expression, transform the expression and normalise it.
 
-After that I performed a cluster analysis using k-means clustering (`cluster::clara()`) with an arbitrary number of clusters (k=10) to get a quick look at expression patterns. It was a bit tricky because for this kind of analysis I have to change between dataframes and matrices, but I got there at the end (Table 1).
+After that I performed a cluster analysis using k-means clustering (`cluster::clara()`) with an arbitrary number of clusters (for this example I used k=10) to get a quick look at expression patterns. It was a bit tricky because for this kind of analysis I have to change between dataframes and matrices, but I got there at the end (Table 1).
 
 
 ```{r mytable, out.width='80%', echo = FALSE}
@@ -188,7 +188,7 @@ heatmap_plot <- tidy_expression_cluster %>%
                             "norm.WT_Embryo_1"="1","norm.WT_Embryo_2"="2","norm.WT_Embryo_3"="3", "norm.WT_Embryo_4"="4"))
 
 heatmap_plot <- heatmap_plot +  
-  labs(x = "Sample developmental stage",
+  labs(x = "Seed developmental stage",
        y = "Genes",
        fill = "Normalized expression") +
   theme(
@@ -200,16 +200,16 @@ heatmap_plot
 ```
 
 # My Digital Toolbox
-For this project I have used mainly the `Tydyverse` package, but I had to add a few others to add images to graphs (`library(png)` and `library(grid)`) I also explored the `heatmap()` function that is built in R for using a matrix of data, although I decied to use `ggplot` at the end for making the heatmap.
+For this project I have used mainly the `Tydyverse` package, but I had to add a few others to add images to graphs (`library(png)` and `library(grid)`) I also explored the `heatmap()` function that is built in R for using a matrix of data, although I decided to use `ggplot` at the end for making the heatmap.
 
 ## Favourite tools
 ![](resources/img/tidyverse.png){width=100px}![](resources/img/ggplot.png){width=90px} and of course ![](resources/img/dataschool.jpg){width=90px}
 
 # My time went ...
-I spend about 10% of the time tidying the data, about 80% trying to do the cluster analysis and heatmap and about 10% preparing the Rmarkdown file. I found it a bit overwhelming because there where so many options when I seached for help. It was difficult to change from dataframes to matrix formats. Also because I tried to analyses the whole cowpea genome I was running out of computing power. Likely, the instructors put me into the right track and I could find the right approach.
+I spent about 10% of the time tidying the data, about 80% trying to do the cluster analysis and heatmap, and about 10% preparing the Rmarkdown file. I found it a bit overwhelming initially because there where so many options when I searched the web for help. It was difficult to change from dataframes to matrix formats. Also, because I tried to analyse the whole cowpea genome I was running out of computing power. Likely, the instructors put me into the right track and I could find the appropiate approach.
 
 # Next steps
-After this exploratory work, I need now to keep playing with the pre-processing filtering steps and with the clustering parameters to find the genes more likely to be biologically relevant for oil accumulation.
+After this exploratory work, I need now to keep playing with the pre-processing filtering steps and with the clustering parameters to filter the genes to identify those more likely to be biologically relevant for oil accumulation.
 
 # My Data School Experience
 With this exercise I was able to identify groups of genes that are high- or low-expressed at different stages during seed developemnt in transgenic seeds with high oil.
@@ -217,6 +217,7 @@ With this exercise I was able to identify groups of genes that are high- or low-
 I am very happy to have attended **Data School**. The experiencxe has been much more positive than I though and, starting from zero, I have learnt heaps. The course was very well structured and the teachers were fantastic. I will definetly recommend it.
 
 **Thanks a lot to Spephen, Keransa, Khristian and all the helpers for your effort and patience!**
+
 And thanks to TJ Higgins, Surinder Singh and Jerome Verdier for sharing the data.
 
 R version: `r getRversion()`
