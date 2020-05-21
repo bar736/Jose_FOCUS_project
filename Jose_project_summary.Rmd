@@ -63,20 +63,20 @@ write_csv(tidy_embryo_expression, 'results/tidy_embryo_expression.csv')
 My name is **Jose Barrero** and I am a Research Scientist in Agriculture and Food. I recently started leading the Cowpea Team in Black Mountain. I have not done any coding before but I generate large datasets that need complex analysis, so that is why I decided to learn a bit of R and to come to Data School as part of my _Julius Career Award_ activities.
 
 # My Project
-My project is about exploring gene changes in a **transgenic "high-oil" cowpea** line that we have made. Cowpea is a key staple crop in in West Africa being a main  protein source for over 200 million people. By introducing the gene cassette that appears below with three oil-related genes we tried to increased the oil-content in the seeds making them more nutritious.
+My project is about exploring gene changes in a **transgenic "high-oil" cowpea** line that we have made. Cowpea (Image 1) is a key staple crop in West Africa being a main protein source for over 200 million people. By introducing the gene cassette that appears below (Image 2) with three oil-related genes (oleosin, WRI1 and DGAT1) we tried to increased the oil-content in the seeds making them more nutritious.
 
-Our transgenic line (**named 15B**) has more oil in the seeds that the wildtype line (**named IT86**). We collected RNA samples from developing seeds from 15B and IT86 at **4 different stages** and performed a trancriptomic RNAseq analysis. 
+Our transgenic line (**named 15B**) has about 7 times more oil in the seeds that the wildtype line (**named IT86**). We collected RNA samples from developing seeds from 15B and IT86 at **4 different stages** and performed a trancriptomic RNAseq analysis. 
 
 The goal of this project is to evaluate the gene expression changes bewteen the two genotypes and to identify genes related with the production of oil. The plan was making a heatmap illustrating the gene expression changes across the samples and to group the genes into clusters with similar expression patterns.
 
 
-![](resources/img/cowpea.jpg){width=200px} ![](resources/img/oilconstruct.jpg){width=700px}
+![Image 1. Cowpea seeds.](resources/img/cowpea.jpg){width=250px}![Image 2. Gene cassette used.](resources/img/oilconstruct.jpg){width=650px}
 
 
 
 ## Description of the samples
-We first analysed the oil content in seeds from wildtype and transgenic seeds during seed developmet (Figure 1). The transgenic line showed a significant increased in oil content from stage 3, remaining high until stage 5 (matured dry seed). 
-We performed RNAseq in stages 1 to 4 in both genotypes. 
+After generating the transgenic line, we first analysed the oil content in seeds from wildtype (**IT86**) and transgenic (**15B**) seeds during seed developmet (Figure 1). The transgenic line showed a significant increased in oil content from stage 3, remaining high until stage 5 (matured dry seed). 
+So we decided to collect RNA samples from stages 1 to 4 to performed RNAseq. 
 
 ```{r standard-plot1, echo=FALSE, out.width='60%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Oil content analysis in our cowpea samples. Seeds from five developmental stages were analysed, being the stage 5 the dry mature seed. For gene expression analysis RNA samples were collected from stages 1 to 4."}
 
@@ -90,13 +90,10 @@ Oilcontent_plot <- ggplot(data = oilcontent,
                     -Inf, Inf, -Inf, Inf) + geom_point() 
 
 Oilcontent_plot <- Oilcontent_plot +  
-  labs(#title = "Oil content in transgenic and wildtype cowpeas",
-       #caption = 'ADD CAPTION',
-       x = "Seed developmental stage",
+  labs(x = "Seed developmental stage",
        y = "Oil content (% DW)",
        size = "Seed weight (mg)",
        colour = "Genotype") + 
-  #scale_x_continuous())+
   scale_y_continuous(limits=c(0, 10))+
   
   theme(
@@ -111,7 +108,7 @@ Oilcontent_plot
 ```
 
 ## Workflow
-I started with a matrix of expression values and first I have to transform the data into a tidy dataframe and add the gene descriptions into it. After that I did some basic data processing to remove genes with low expression, transform the expression and normlise it.
+I started with a matrix of expression values and first I have to transform the data into a tidy dataframe and merge different files to add the gene descriptions into it. After that I did some basic data processing to remove genes with low expression, transform the expression and normalise it.
 
 After that I performed a cluster analysis using k-means clustering (`cluster::clara()`) with an arbitrary number of clusters (k=10) to get a quick look at expression patterns. It was a bit tricky because for this kind of analysis I have to change between dataframes and matrices, but I got there at the end (Table 1).
 
@@ -158,78 +155,69 @@ expn_clustered <- cluster::clara(expn_table, k = 10)
 
 gene_order <- names(sort(expn_clustered$clustering))
 
+#getting cluster numbers
+cluster_info <- tibble(cluster = expn_clustered$clustering, gene_name = names(expn_clustered$clustering))
+view(full_join(expn_scaled, cluster_info, by = c('gene_name')))
+tidy_expression_cluster <- full_join(expn_scaled, cluster_info, by = c('gene_name'))
+tidy_expression_cluster <- tidy_expression_cluster %>% select(-gene_id)
 
-knitr::kable(head(expn_scaled, n = 5), format = "html", caption = "First rows of the final table containing the clustered relative expression values for each gene and the annotations") %>% 
+
+
+knitr::kable(head(tidy_expression_cluster, n = 5), format = "html", caption = "First rows of the final table containing the clustered relative expression values for each gene and their annotations.") %>% 
   kable_styling("striped")
 ```
 
 ## Results
-Once I obtained the data frame containing the clustered genes with relative expression values I used `ggplot()` to built the heatmap.
+### Whole genome clustering
+Once I obtained the data frame containing the clustered genes with relative expression values I used `ggplot()` to built the heatmap converting the gene names to a factor, with the levels of the factor being the gene order produced by the clustering (Figure 2).
 
-```{r standard-plot2, echo = FALSE, out.width='60%', fig.align='center', fig.height= 8, fig.width=6, fig.cap="Gene expression heatmap during seed developmet"}
+```{r standard-plot2, echo = FALSE, out.width='60%', fig.align='center', fig.height= 8, fig.width=6, fig.cap="Gene expression heatmap during seed developmet. Normalised expression of 24,534 genes is shown for all transgenic (T) and wildtype (WT) samples."}
 
 
 # Make plot by coverting first the gene names to a factor, 
 #with the levels of the factor being our gene order.
 
-heatmap_plot <- expn_scaled %>% 
+heatmap_plot <- tidy_expression_cluster %>% 
 	mutate(gene_name = factor(gene_name, levels = gene_order)) %>% 
 	ggplot(aes(y = gene_name, x = sample, fill = norm_expn)) +
 	geom_tile() +
   facet_grid(~ genotype, switch = "x", scales = "free_x", space = "free_x") +
 	scale_y_discrete(labels = NULL, breaks = NULL) +
 	scale_fill_distiller(palette = "RdBu") +
-  scale_x_discrete(labels=c("norm.T_Embryo_1" = "1", 
-                            "norm.T_Embryo_2" = "2", 
-                            "norm.T_Embryo_3" = "3", 
-                            "norm.T_Embryo_4" = "4", 
-                            "norm.WT_Embryo_1" = "1",
-                            "norm.WT_Embryo_2" = "2",
-                            "norm.WT_Embryo_3" = "3",
-                            "norm.WT_Embryo_4" = "4"))
-
+  scale_x_discrete(labels=c("norm.T_Embryo_1"="1", "norm.T_Embryo_2"="2","norm.T_Embryo_3"="3", "norm.T_Embryo_4"="4",
+                            "norm.WT_Embryo_1"="1","norm.WT_Embryo_2"="2","norm.WT_Embryo_3"="3", "norm.WT_Embryo_4"="4"))
 
 heatmap_plot <- heatmap_plot +  
-  labs(#title = "Gene expression heatmap during seed developmet",
-       #subtitle = "Comparison between the wildtype and the high-oil transgenic",
-       #caption = '(Raw RNAseq data analysed by J. Verdier)',
-       x = "Sample developmental stage",
+  labs(x = "Sample developmental stage",
        y = "Genes",
        fill = "Normalized expression") +
-  
   theme(
     plot.title = element_text(face = "bold"),
-    #strip.background = element_blank(),
     axis.title = element_text(size = 10, face = "bold"),
-    #axis.text.x = element_text(angle=45),
     legend.position="bottom")
 
 heatmap_plot
 ```
 
 # My Digital Toolbox
-For this project I have used mainly the `Tydyverse` package, but I had to add a few others to add images to graphs and also for trying the `heatmap()` function using a matrix.
+For this project I have used mainly the `Tydyverse` package, but I had to add a few others to add images to graphs (`library(png)` and `library(grid)`) I also explored the `heatmap()` function that is built in R for using a matrix of data, although I decied to use `ggplot` at the end for making the heatmap.
 
-## Favourite tool
-
-![](resources/img/tidyverse.png){width=100px}![](resources/img/ggplot.png){width=90px}
-
+## Favourite tools
+![](resources/img/tidyverse.png){width=100px}![](resources/img/ggplot.png){width=90px} and of course ![](resources/img/dataschool.jpg){width=90px}
 
 # My time went ...
-
-I spend about 10% of the time tidying the data, and about 90% trying to do the cluster analysis and heatmap. I found it a bit overwhelming because there where so many options when I seached for help. It was difficult to change from dataframes to matrix formats. Also because I tried to analyses the whole cowpea genome I was running out of computing power. Likely, with a bit of help from the instructors I could find the right approach.
+I spend about 10% of the time tidying the data, about 80% trying to do the cluster analysis and heatmap and about 10% preparing the Rmarkdown file. I found it a bit overwhelming because there where so many options when I seached for help. It was difficult to change from dataframes to matrix formats. Also because I tried to analyses the whole cowpea genome I was running out of computing power. Likely, the instructors put me into the right track and I could find the right approach.
 
 # Next steps
-
-After this exploratory work, I need now to keep playing with the pre-processing steps and with the clustering parameters to find the genes more likely to be biologically relevant for oil accumulation.
+After this exploratory work, I need now to keep playing with the pre-processing filtering steps and with the clustering parameters to find the genes more likely to be biologically relevant for oil accumulation.
 
 # My Data School Experience
-
 With this exercise I was able to identify groups of genes that are high- or low-expressed at different stages during seed developemnt in transgenic seeds with high oil.
 
-I am very happy to have attended **Data School**. The experiencxe has been much more positive than I though and, starting from 0, I have learnt heaps. The course was very well structured and the teachers were fantastic. I will definetly recommend it.
+I am very happy to have attended **Data School**. The experiencxe has been much more positive than I though and, starting from zero, I have learnt heaps. The course was very well structured and the teachers were fantastic. I will definetly recommend it.
 
 **Thanks a lot to Spephen, Keransa, Khristian and all the helpers for your effort and patience!**
+And thanks to TJ Higgins, Surinder Singh and Jerome Verdier for sharing the data.
 
 R version: `r getRversion()`
 Tidyverse version: `r packageVersion("tidyverse")` 
